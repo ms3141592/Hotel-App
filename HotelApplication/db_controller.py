@@ -61,12 +61,83 @@ class MySQL_CRUD:
         except:
             self.db.rollback()
 
-    def show_db_table(self, name, k):
-        sql = ("SELECT * FROM {} ORDER BY {}".format(name, k))
+    def show_db_table(self, name, val):
+        sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
         self.cur.execute(sql)
-
+        a = ''
         for row in self.cur.fetchall():
-            print(row)
+            for r in row:
+                if r is not row[5]:
+                    a += '{}\t'.format(str(r))
+            a += '\n'
+        return a
+
+    def show_db_table_stat(self, name, val):
+        sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
+        self.cur.execute(sql)
+        e = ''
+        f = ''
+        for row in self.cur.fetchall():
+            if row[5] == '1':
+                for r in row:
+                    if r is not row[5]:
+                        e += '{} '.format(r)
+                e += '\n'
+            if row[5] == '2':
+                for r in row:
+                    if r is not row[5]:
+                        f += '{} '.format(r)
+                f+='\n'
+        return e,f
+
+    # for hotel class
+    def edit_table_row(self, tb, cur_name, old_occ_na, new_name, bed, bed_type, sm, s):
+        sql = "UPDATE {0} SET " \
+              "{1} = '{2}', " \
+              "occupied = 2 " \
+              "WHERE " \
+              "{1} = '{3}' and " \
+              "{4} = '{5}' and " \
+              "{6} = '{7}' and " \
+              "occupied = 1 " \
+              "LIMIT 1".format(tb, cur_name, old_occ_na, new_name, bed, bed_type, sm, s)
+
+        self.cur.execute(sql)
+        self.db.commit()
+
+    def edit_row(self, tb, row_name, old, new):
+        sql = "UPDATE {0} SET {1} = '{3}', occupied = 1 WHERE {1} = '{2}' LIMIT 1".format(tb, row_name, old, new)
+        print(sql)
+        self.cur.execute(sql)
+        self.db.commit()
+
+    def get_daily_sales(self, name, val):
+        sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
+        self.cur.execute(sql)
+        a = 0
+        for v in self.cur.fetchall():
+            if int(v[5]) == 2:
+                a += float(v[4])
+        print(a)
+        return a
+
+    def percentage(self, name, val):
+        sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
+        self.cur.execute(sql)
+        a = [0, 0]
+        r = 0
+        for v in self.cur.fetchall():
+            a[0] += 1
+            if int(v[5]) == 2:
+                a[1] += 1
+                print(a[0], a[1])
+
+        try:
+            r = (a[1] / a[0]) * 100
+        except ZeroDivisionError as zde:
+            print(zde)
+
+        return r
 
     def delete_table_row(self, name, k, v):
         sql = "DELETE FROM {} WHERE {} = {}".format(name, k, v)

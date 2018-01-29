@@ -11,6 +11,8 @@ from tkinter import ttk
 
 from PIL import ImageTk, Image
 
+from hotel import Hotel
+
 
 class Page2(tk.Frame):
     def __init__(self, parent, controller):
@@ -20,9 +22,10 @@ class Page2(tk.Frame):
 class HotelController(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+
         self.resizable(width=False, height=False)
         tk.Tk.iconbitmap(self, default='images/logo.ico')
-        tk.Tk.wm_title(self, 'Hotel Managment App')
+        tk.Tk.wm_title(self, 'Hotel Management App')
 
         container = tk.Frame(self)
         container.grid(columnspan=10, padx=10, pady=10)
@@ -48,6 +51,10 @@ class FrameDisplay(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.int = None
+        self.hotel = Hotel('Beach Marriot Pensacola',
+                           '123 Main Street, City, ST 10000')
+        self.define_room(number=1, occupant='None', smoking='s', bed='twin', rate=1.1, occupied=1, reservation=1)
         self.run()
 
     def menu_bar(self):
@@ -87,6 +94,23 @@ class FrameDisplay(tk.Frame):
 
     def print_page(self):
         pass
+
+    def define_room(self, number=None, occupant=None, smoking=None, bed=None, rate=None, occupied=None,
+                    reservation=None):
+        if reservation:
+            self.reservation = reservation
+        if number:
+            self.number = number
+        if occupant:
+            self.occupant = occupant
+        if smoking:
+            self.smoking = smoking
+        if bed:
+            self.bed = bed
+        if rate:
+            self.rate = rate
+        if occupied:
+            self.occupied = occupied
 
     #########################
     # main page on start    #
@@ -152,6 +176,10 @@ class FrameDisplay(tk.Frame):
         create.grid(row=5, column=2, columnspan=3, padx=1, pady=3)
         self.menu_bar()
 
+    def eddit_room(self, num=0, rate=0):
+        self.hotel.add_room(number=num, occupant=self.occupant, smoking=self.smoking, bed_type=self.bed, rate=rate,
+                            occupied=1)
+
     def modify_hotel(self):
         self.clear_frame()
         label = ttk.Label(self, text='')
@@ -183,29 +211,29 @@ class FrameDisplay(tk.Frame):
         s_radio = ttk.Radiobutton(self, text='smoking',
                                   variable=smk,
                                   value=1,
-                                  command=lambda: print('s'))
+                                  command=lambda: self.define_room(smoking='s'))
         s_radio.grid(row=8, column=0, padx=1, pady=5, sticky='w')
         non_s_radio = ttk.Radiobutton(self, text='non-smiking',
                                       variable=smk,
                                       value=2,
-                                      command=lambda: print('n'))
+                                      command=lambda: self.define_room(smoking='n'))
         non_s_radio.grid(row=8, column=1, padx=1, pady=5, sticky='w')
 
         bed = tk.IntVar()
         admin_radio = ttk.Radiobutton(self, text='twin',
                                       variable=bed,
                                       value=1,
-                                      command=lambda: print('twin'))
+                                      command=lambda: self.define_room(bed='twin'))
         admin_radio.grid(row=9, column=0, padx=1, pady=5, sticky='w')
         employee_radio = ttk.Radiobutton(self, text='queen',
                                          variable=bed,
                                          value=2,
-                                         command=lambda: print('queen'))
+                                         command=lambda: self.define_room(bed='queen'))
         employee_radio.grid(row=9, column=1, padx=1, pady=5, sticky='w')
         employee_radio = ttk.Radiobutton(self, text='king',
                                          variable=bed,
                                          value=3,
-                                         command=lambda: print('king'))
+                                         command=lambda: self.define_room(bed='king'))
         employee_radio.grid(row=9, column=1, padx=1, pady=5, sticky='e')
 
         rate_label = ttk.Label(self, text='rate')
@@ -214,47 +242,54 @@ class FrameDisplay(tk.Frame):
         rate_entry.grid(row=10, column=1, pady=5, sticky='w')
 
         create = ttk.Button(self, text='confirm',
-                            command=lambda: print('confirm'))
+                            command=lambda: self.eddit_room(num=rn_entry.get(), rate=rate_entry.get()))
         create.grid(row=11, column=0, padx=1, pady=5, sticky='w')
         self.menu_bar()
 
     #########################
     # hotel page            #
     #########################
-    def hotel_info(self):
-        self.clear_frame()
+    def hotel_info_type(self, int=None):
+        if int:
+            self.int = int
+            print(self.int, int)
 
-        var = tk.IntVar()
-        hotel_info = ttk.Radiobutton(self, text='hotel info',
-                                     variable=var,
-                                     value=1,
-                                     command=lambda: print('info'))
+        hotel_info = ttk.Button(self, text='hotel info', command=lambda: self.hotel_info_type(1))
         hotel_info.grid(row=0, column=0, columnspan=3, padx=1, pady=5, sticky='w')
-        daily_sales = ttk.Radiobutton(self, text='daily sales',
-                                      variable=var,
-                                      value=2,
-                                      command=lambda: print('sales'))
+        daily_sales = ttk.Button(self, text='daily sales', command=lambda: self.hotel_info_type(2))
         daily_sales.grid(row=0, column=0, columnspan=3, padx=1, pady=5, sticky='ns')
-        occupancy = ttk.Radiobutton(self, text='occupancy percentage',
-                                    variable=var,
-                                    value=3,
-                                    command=lambda: print('percentage'))
+        occupancy = ttk.Button(self, text='occupancy percentage', command=lambda: self.hotel_info_type(3))
         occupancy.grid(row=0, column=0, columnspan=3, padx=1, pady=5, sticky='e')
-
         empty_info = tk.Text(self, height=32, width=70)
         empty_scroll = ttk.Scrollbar(self, command=empty_info.yview)
         empty_info.configure(yscrollcommand=empty_scroll.set)
 
-        empty_info.insert(tk.END, '\nhotel info\n')
+        empty_info.insert(tk.END, self.display_info())
         empty_info.config(state=tk.DISABLED)
 
         empty_info.grid(row=2, column=0)
         empty_scroll.grid(row=2, column=1, rowspan=10, sticky='nswe')
-        self.menu_bar()
+
+    def display_info(self):
+        if self.int is 1:
+            return str(self.hotel)
+        elif self.int is 2:
+            return self.hotel.daily_sales()
+        elif self.int is 3:
+            return self.hotel.daily_percentage()
+        else:
+            return 'info'
+
+    def hotel_info(self):
+        self.clear_frame()
+
+        self.hotel_info_type()
+
         self.menu_bar()
 
     def current_rooms(self):
         self.clear_frame()
+        e,f = self.hotel.room_status()
         label = ttk.Label(self, text='empty rooms')
         label.grid(row=0, column=0, columnspan=10, pady=10, padx=10, sticky='w')
         label = ttk.Label(self, text='reserved rooms')
@@ -264,7 +299,7 @@ class FrameDisplay(tk.Frame):
         empty_scroll = ttk.Scrollbar(self, command=empty_info.yview)
         empty_info.configure(yscrollcommand=empty_scroll.set)
 
-        empty_info.insert(tk.END, '\nempty rooms\n')
+        empty_info.insert(tk.END, e)
         empty_info.config(state=tk.DISABLED)
 
         empty_info.grid(row=2, column=0)
@@ -275,7 +310,7 @@ class FrameDisplay(tk.Frame):
         full_scroll = ttk.Scrollbar(self, command=full_info.yview)
         full_info.configure(yscrollcommand=full_scroll.set)
 
-        full_info.insert(tk.END, '\nreserved rooms\n')
+        full_info.insert(tk.END, f)
         full_info.config(state=tk.DISABLED)
 
         full_info.grid(row=2, column=2)
@@ -287,6 +322,7 @@ class FrameDisplay(tk.Frame):
         label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
         label = ttk.Label(self, text='room reservation')
         label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
+
         var = tk.IntVar()
         name = ttk.Radiobutton(self, text='by name',
                                variable=var,
@@ -300,7 +336,7 @@ class FrameDisplay(tk.Frame):
         room_num.grid(row=4, column=0, columnspan=3, padx=1, pady=5, sticky='n')
 
         rn_entry = ttk.Entry(self, textvariable='rn entry', width=25)
-        rn_entry.grid(row=7, column=1, pady=5)
+        rn_entry.grid(row=5, column=0)
 
         empty_info = tk.Text(self, height=28, width=70)
         empty_scroll = ttk.Scrollbar(self, command=empty_info.yview)
@@ -326,52 +362,53 @@ class FrameDisplay(tk.Frame):
         create_radio = ttk.Radiobutton(self, text='create reservation',
                                        variable=var,
                                        value=1,
-                                       command=lambda: print('create'))
+                                       command=lambda: self.define_room(reservation=2))
         create_radio.grid(row=4, column=0, columnspan=3, padx=1, pady=5, sticky='w')
         cancel_radio = ttk.Radiobutton(self, text='cancel reservation',
                                        variable=var,
                                        value=2,
-                                       command=lambda: print('cancel'))
+                                       command=lambda: self.define_room(reservation=1))
         cancel_radio.grid(row=4, column=1, columnspan=3, padx=1, pady=5, sticky='e')
 
         label = ttk.Label(self, text='')
         label.grid(row=5, column=0, columnspan=10, pady=10, padx=10)
 
-        rn_label = ttk.Label(self, text='name')
-        rn_label.grid(row=7, column=0, padx=1, pady=1)
-        rn_entry = ttk.Entry(self, textvariable='entry', width=25)
-        rn_entry.grid(row=7, column=1, pady=5)
+        n_label = ttk.Label(self, text='guest name')
+        n_label.grid(row=7, column=0, padx=1, pady=1)
+        n_entry = ttk.Entry(self, textvariable='entry', width=25)
+        n_entry.grid(row=7, column=1, pady=5)
 
         smk = tk.IntVar()
         s_radio = ttk.Radiobutton(self, text='smoking',
                                   variable=smk,
                                   value=1,
-                                  command=lambda: print('smoking'))
+                                  command=lambda: self.define_room(smoking='s'))
         s_radio.grid(row=8, column=0, padx=1, pady=5, sticky='w')
         n_radio = ttk.Radiobutton(self, text='non-smiking',
                                   variable=smk,
                                   value=2,
-                                  command=lambda: print('non smoking'))
+                                  command=lambda: self.define_room(smoking='n'))
         n_radio.grid(row=8, column=1, padx=1, pady=5, sticky='w')
 
         bed = tk.IntVar()
         admin_radio = ttk.Radiobutton(self, text='twin',
                                       variable=bed,
                                       value=1,
-                                      command=lambda: print('admin'))
+                                      command=lambda: self.define_room(bed='twin'))
         admin_radio.grid(row=9, column=0, padx=1, pady=5, sticky='w')
         employee_radio = ttk.Radiobutton(self, text='queen',
                                          variable=bed,
                                          value=2,
-                                         command=lambda: print('employee'))
+                                         command=lambda: self.define_room(bed='queen'))
         employee_radio.grid(row=9, column=1, padx=1, pady=5, sticky='w')
         employee_radio = ttk.Radiobutton(self, text='king',
                                          variable=bed,
                                          value=3,
-                                         command=lambda: print('employee'))
+                                         command=lambda: self.define_room(bed='king'))
         employee_radio.grid(row=9, column=1, padx=1, pady=5, sticky='e')
 
         create = ttk.Button(self, text='confirm',
-                            command=lambda: print('added'))
+                            command=lambda: self.hotel.add_reservation(name=n_entry.get(), smoking=self.smoking,
+                                                                       bed=self.bed, res=self.reservation))
         create.grid(row=10, column=0, padx=1, pady=5, sticky='w')
         self.menu_bar()
