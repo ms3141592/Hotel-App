@@ -2,6 +2,9 @@
     mySQL - pymysql DATABASE MODEL 1/26/2018
 """
 
+# TODO:: need a method to return the column names
+# TODO:: need a method to return tables in db
+# TODO:: need to clean up methods
 import pymysql
 
 
@@ -46,8 +49,11 @@ class MySQL_CRUD:
         except pymysql.err.InternalError as ie:
             print(ie)
 
-    # TODO:: need a method to return the column names
-    # TODO:: need a method to return tables in db
+    def tb_row(self, tb, val, key):
+        sql = "SELECT * FROM {} WHERE {} = '{}'".format(tb, key, val)
+        self.cur.execute(sql)
+        return self.cur.fetchone()
+
     # returns number of columns
     def tb_columns(self, tb):
         sql = 'SHOW FIELDS FROM {}'.format(tb)
@@ -65,12 +71,17 @@ class MySQL_CRUD:
         sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
         self.cur.execute(sql)
         a = ''
+        b =''
         for row in self.cur.fetchall():
             for r in row:
-                if r is not row[5]:
+                if r is row[1]:
+                    a += '{}\t\t\t'.format(str(r))
+                elif r is not row[5]:
                     a += '{}\t'.format(str(r))
+                else:
+                    b += '{}:'.format(str(r))
             a += '\n'
-        return a
+        return a,b
 
     def show_db_table_stat(self, name, val):
         sql = ("SELECT * FROM {} ORDER BY {}".format(name, val))
@@ -87,8 +98,8 @@ class MySQL_CRUD:
                 for r in row:
                     if r is not row[5]:
                         f += '{} '.format(r)
-                f+='\n'
-        return e,f
+                f += '\n'
+        return e, f
 
     # for hotel class
     def edit_table_row(self, tb, cur_name, old_occ_na, new_name, bed, bed_type, sm, s):
@@ -107,7 +118,6 @@ class MySQL_CRUD:
 
     def edit_row(self, tb, row_name, old, new):
         sql = "UPDATE {0} SET {1} = '{3}', occupied = 1 WHERE {1} = '{2}' LIMIT 1".format(tb, row_name, old, new)
-        print(sql)
         self.cur.execute(sql)
         self.db.commit()
 
@@ -118,7 +128,6 @@ class MySQL_CRUD:
         for v in self.cur.fetchall():
             if int(v[5]) == 2:
                 a += float(v[4])
-        print(a)
         return a
 
     def percentage(self, name, val):
@@ -130,8 +139,6 @@ class MySQL_CRUD:
             a[0] += 1
             if int(v[5]) == 2:
                 a[1] += 1
-                print(a[0], a[1])
-
         try:
             r = (a[1] / a[0]) * 100
         except ZeroDivisionError as zde:
@@ -141,7 +148,6 @@ class MySQL_CRUD:
 
     def delete_table_row(self, name, k, v):
         sql = "DELETE FROM {} WHERE {} = {}".format(name, k, v)
-        print('{} by col {} deleted from {}'.format(v, k, name))
 
         self.cur.execute(sql)
         self.db.commit()

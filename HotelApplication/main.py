@@ -1,4 +1,4 @@
-from console_run import HotelTestApp
+
 from kt_gui import HotelController
 
 app = HotelController()

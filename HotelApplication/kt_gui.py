@@ -52,9 +52,10 @@ class FrameDisplay(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.int = None
+        self.reserved = None
         self.hotel = Hotel('Beach Marriot Pensacola',
                            '123 Main Street, City, ST 10000')
-        self.define_room(number=1, occupant='None', smoking='s', bed='twin', rate=1.1, occupied=1, reservation=1)
+        # self.define_room(number=1, occupant='empty', smoking='s', bed='twin', rate=1.1, occupied=1, reservation=1)
         self.run()
 
     def menu_bar(self):
@@ -74,7 +75,7 @@ class FrameDisplay(tk.Frame):
         hotel_menu = tk.Menu(menubar, tearoff=0)
         hotel_menu.add_command(label="info", command=lambda: self.hotel_info())
         hotel_menu.add_command(label="current rooms", command=lambda: self.current_rooms())
-        hotel_menu.add_command(label="check reservation", command=lambda: self.check_reservation())
+        hotel_menu.add_command(label="check reservation", command=lambda: self.reservation_status())
         hotel_menu.add_command(label="room reservation", command=lambda: self.room_reservation())
         menubar.add_cascade(label="hotel", menu=hotel_menu)
 
@@ -89,6 +90,7 @@ class FrameDisplay(tk.Frame):
             widget.destroy()
 
     def run(self):
+        self.define_room(number=1, occupant='empty', smoking='s', bed='twin', rate=1.1, occupied=1, reservation=1)
         self.login_page()
         self.menu_bar()
 
@@ -195,7 +197,7 @@ class FrameDisplay(tk.Frame):
         edit_radio.grid(row=4, column=0, columnspan=3, padx=1, pady=5, sticky='w')
         add_radio = ttk.Radiobutton(self, text='add room',
                                     variable=var,
-                                    value=2,
+                                    value=1,
                                     command=lambda: print('add room'))
         add_radio.grid(row=4, column=1, columnspan=3, padx=1, pady=5, sticky='w')
 
@@ -252,7 +254,6 @@ class FrameDisplay(tk.Frame):
     def hotel_info_type(self, int=None):
         if int:
             self.int = int
-            print(self.int, int)
 
         hotel_info = ttk.Button(self, text='hotel info', command=lambda: self.hotel_info_type(1))
         hotel_info.grid(row=0, column=0, columnspan=3, padx=1, pady=5, sticky='w')
@@ -289,7 +290,7 @@ class FrameDisplay(tk.Frame):
 
     def current_rooms(self):
         self.clear_frame()
-        e,f = self.hotel.room_status()
+        e, f = self.hotel.room_status()
         label = ttk.Label(self, text='empty rooms')
         label.grid(row=0, column=0, columnspan=10, pady=10, padx=10, sticky='w')
         label = ttk.Label(self, text='reserved rooms')
@@ -316,43 +317,16 @@ class FrameDisplay(tk.Frame):
         full_info.grid(row=2, column=2)
         full_scroll.grid(row=2, column=3, rowspan=10, sticky='nswe')
 
-    def check_reservation(self):
+    def reservation_status(self):
         self.clear_frame()
-        label = ttk.Label(self, text='')
-        label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
-        label = ttk.Label(self, text='room reservation')
-        label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
 
-        var = tk.IntVar()
-        name = ttk.Radiobutton(self, text='by name',
-                               variable=var,
-                               value=1,
-                               command=lambda: print('admin'))
-        name.grid(row=4, column=0, columnspan=3, padx=1, pady=5, sticky='w')
-        room_num = ttk.Radiobutton(self, text='by room',
-                                   variable=var,
-                                   value=2,
-                                   command=lambda: print('employee'))
-        room_num.grid(row=4, column=0, columnspan=3, padx=1, pady=5, sticky='n')
-
-        rn_entry = ttk.Entry(self, textvariable='rn entry', width=25)
-        rn_entry.grid(row=5, column=0)
-
-        empty_info = tk.Text(self, height=28, width=70)
-        empty_scroll = ttk.Scrollbar(self, command=empty_info.yview)
-        empty_info.configure(yscrollcommand=empty_scroll.set)
-
-        empty_info.insert(tk.END, '\nhotel info\n')
-        empty_info.config(state=tk.DISABLED)
-
-        empty_info.grid(row=10, column=0)
-        empty_scroll.grid(row=2, column=1, rowspan=10, sticky='nswe')
+        self.find_reservation()
 
         self.menu_bar()
 
     def room_reservation(self):
         self.clear_frame()
-        self.clear_frame()
+
         label = ttk.Label(self, text='')
         label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
         label = ttk.Label(self, text='room reservation')
@@ -412,3 +386,43 @@ class FrameDisplay(tk.Frame):
                                                                        bed=self.bed, res=self.reservation))
         create.grid(row=10, column=0, padx=1, pady=5, sticky='w')
         self.menu_bar()
+
+    def find_reservation(self, val='null', key='null'):
+
+        self.reserved = self.hotel.check_reservation('rooms', val, key)
+
+        label = ttk.Label(self, text='')
+        label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
+        label = ttk.Label(self, text='room reservation')
+        label.grid(row=2, column=0, columnspan=10, pady=10, padx=10, sticky='w')
+
+        res_entry = ttk.Entry(self, textvariable='res entry', width=25)
+        res_entry.grid(row=5, column=0, padx=1, pady=5, sticky='w')
+        check_nm = ttk.Button(self, text='name',
+                              command=lambda: self.find_reservation(res_entry.get(), 'occupant'))
+        check_nm.grid(row=5, column=0, padx=1, pady=5, sticky='n')
+        check_rm = ttk.Button(self, text='room',
+                              command=lambda: self.find_reservation(res_entry.get(), 'number'))
+        check_rm.grid(row=5, column=0, padx=1, pady=5, sticky='e')
+
+        empty_info = tk.Text(self, height=28, width=70)
+        empty_scroll = ttk.Scrollbar(self, command=empty_info.yview)
+        empty_info.configure(yscrollcommand=empty_scroll.set)
+
+        empty_info.insert(tk.END, self.display_reservation())
+        empty_info.config(state=tk.DISABLED)
+
+        empty_info.grid(row=10, column=0)
+        empty_scroll.grid(row=10, column=1, rowspan=10, sticky='nswe')
+
+    def display_reservation(self):
+        r = 'no reservation'
+        if self.reserved:
+            r=''
+            for res in self.reserved:
+                r += '{} '.format(res)
+
+            r = r[0:-2]
+            return r
+        else:
+            return r
